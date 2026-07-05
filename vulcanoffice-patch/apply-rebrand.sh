@@ -138,6 +138,28 @@ while IFS= read -r -d '' f; do
 done < <(find "${DEST}/templates" "${DEST}/lib" -type f \( -name '*.php' -o -name '*.twig' \) -print0 2>/dev/null)
 log "  ${COUNT} template/lib file(s) rewritten"
 
+# 5b. Vulcan-specific UX preference: EditorController::index() renders the
+#     logged-in editor with the "user" Nextcloud layout by default, which
+#     leaves the NC top header visible above the editor iframe. We want the
+#     editor page to render with the "base" layout instead (no NC header,
+#     no NC nav) so the editor fills the whole viewport, and users navigate
+#     back to Files via the customer logo in the editor's top-left
+#     (customization.customer.www).
+#
+#     Idempotent: only patches if the naive TemplateResponse call is present.
+log "== EditorController base layout =="
+EC="${DEST}/lib/Controller/EditorController.php"
+if [[ -f "${EC}" ]]; then
+    if grep -q 'new TemplateResponse($this->appName, "editor", $params);' "${EC}"; then
+        sedi 's|new TemplateResponse($this->appName, "editor", $params);|new TemplateResponse($this->appName, "editor", $params, "base");|' "${EC}"
+        log "  patched EditorController.php to render logged-in editor with base layout"
+    else
+        log "  EditorController.php already patched or upstream shape changed"
+    fi
+else
+    log "  EditorController.php not found (upstream layout changed?)"
+fi
+
 # 6. Attribution assertion — refuse to publish if we accidentally erased the
 #    upstream author/copyright from README/AUTHORS/appinfo.
 log "== attribution assertion =="
