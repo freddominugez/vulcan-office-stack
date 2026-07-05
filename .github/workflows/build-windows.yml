@@ -30,9 +30,11 @@ permissions:
 
 env:
   UPSTREAM_REPO: Euro-Office/desktop-apps
-  UPSTREAM_SHA: e5f89e272861
+  UPSTREAM_SHA: e5f89e272861a58b395d02f09c5f3df814ab56e4
+  UPSTREAM_SHA_SHORT: e5f89e272861
   ENGINE_REPO: Euro-Office/DesktopEditors
   ENGINE_TAG: v9.3.1
+  ENGINE_SHA: 5eb31cac36d0fb5be94d733e8606156e3d342f6f
   RELEASE_KEY_ID: releases@vulcanoffice.com
 
 jobs:
@@ -51,8 +53,8 @@ jobs:
         shell: pwsh
         run: |
           $u = Get-Content stack/desktop/UPSTREAM.md -Raw
-          if (-not ($u -match "$env:UPSTREAM_SHA")) {
-            throw "UPSTREAM.md does not reference expected shell SHA $env:UPSTREAM_SHA"
+          if (-not ($u -match "$env:UPSTREAM_SHA_SHORT")) {
+            throw "UPSTREAM.md does not reference expected shell SHA $env:UPSTREAM_SHA_SHORT"
           }
           if (-not ($u -match "$env:ENGINE_TAG")) {
             throw "UPSTREAM.md does not reference expected engine tag $env:ENGINE_TAG"

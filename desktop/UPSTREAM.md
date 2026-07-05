@@ -8,7 +8,7 @@ reads these commits and refuses to run if the checkouts drift.
 
 - Repository: https://github.com/Euro-Office/desktop-apps
 - License: AGPL-3.0
-- Pinned commit: `e5f89e272861`
+- Pinned commit: `e5f89e272861` (full: `e5f89e272861a58b395d02f09c5f3df814ab56e4`)
 - Commit date: 2026-07-01
 - Branch at pinning: `main`
 - Rationale: no semver tag published upstream; pinned to head at time of Vulcan
@@ -19,7 +19,7 @@ reads these commits and refuses to run if the checkouts drift.
 - Repository: https://github.com/Euro-Office/DesktopEditors
 - License: AGPL-3.0
 - Pinned tag: `v9.3.1`
-- Pinned commit: `5eb31cac36d0`
+- Pinned commit: `5eb31cac36d0` (full: `5eb31cac36d0fb5be94d733e8606156e3d342f6f`)
 - Rationale: matches the DocumentServer version running on the Vulcan Office web
   instance (`office.vulcanoffice.com`), so a document produced by the desktop
   binary is byte-identical to one produced by the web editor.
