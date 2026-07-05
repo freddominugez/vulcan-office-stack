@@ -88,10 +88,21 @@ jobs:
           arch: win64_msvc2019_64
           modules: 'qtwebengine qtpositioning qtwebchannel'
 
-      - name: Install Inno Setup
+      - name: Verify Inno Setup available (preinstalled on windows-latest)
         shell: pwsh
         run: |
-          choco install innosetup --version=6.3.3 --no-progress -y
+          $iscc = @(
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+            "C:\Program Files\Inno Setup 6\ISCC.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            Write-Host "ISCC not found; installing latest via choco"
+            choco install innosetup --no-progress -y --force
+            $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          }
+          Write-Host "Using: $iscc"
+          & $iscc /? 2>&1 | Select-Object -First 3
+          Add-Content -Path $env:GITHUB_PATH -Value (Split-Path -Parent $iscc)
 
       # -----------------------------------------------------------------
       - name: Build installer via upstream make.ps1
