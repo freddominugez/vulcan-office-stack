@@ -105,6 +105,20 @@ while IFS= read -r -d '' f; do
 done < <(find "${DEST}/l10n" -type f \( -name '*.js' -o -name '*.json' \) -print0 2>/dev/null)
 log "  ${COUNT} l10n file(s) rewritten"
 
+# 5a. CSS class names — Nextcloud auto-generates a `.app-<id>` class on the
+#     #content element. Any connector CSS selector that scopes rules under
+#     that class must be renamed too, otherwise layouts (iframe height,
+#     header offset) silently break on rebrand.
+log "== CSS class scope =="
+COUNT=0
+while IFS= read -r -d '' f; do
+    if grep -q "app-onlyoffice" "$f"; then
+        sedi 's|app-onlyoffice|app-vulcanoffice|g' "$f"
+        COUNT=$((COUNT+1))
+    fi
+done < <(find "${DEST}/css" "${DEST}/js" -type f \( -name '*.css' -o -name '*.js' \) -print0 2>/dev/null)
+log "  ${COUNT} css/js file(s) rewritten"
+
 # 5. Templates/lib — scoped: only rewrite the app-id in known Nextcloud API
 #    calls (Util::script / Util::addScript / Util::addStyle / App::getAppPath
 #    / $this->appName = / '/apps/onlyoffice/'), NOT in comments, error strings
