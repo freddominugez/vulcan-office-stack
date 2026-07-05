@@ -1,0 +1,53 @@
+{
+    email freddominguez@gmail.com
+    acme_ca https://acme-v02.api.letsencrypt.org/directory
+}
+
+drive.vulcanoffice.com {
+    tls {
+        dns cloudflare {env.CF_API_TOKEN}
+        resolvers 1.1.1.1
+    }
+    encode gzip zstd
+    request_body {
+        max_size 50GB
+    }
+    
+    redir /.well-known/carddav /remote.php/dav/ 301
+    redir /.well-known/caldav /remote.php/dav/ 301
+    
+    reverse_proxy nextcloud:80 {
+        header_up X-Forwarded-Proto https
+        header_up X-Forwarded-Host {host}
+    }
+    
+    header / {
+        >Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        >Referrer-Policy "strict-origin-when-cross-origin"
+        >Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), interest-cohort=(), unload=*"
+        >Cross-Origin-Opener-Policy "same-origin"
+        >X-Robots-Tag "noindex, nofollow"
+    }
+}
+
+office.vulcanoffice.com {
+    tls {
+        dns cloudflare {env.CF_API_TOKEN}
+        resolvers 1.1.1.1
+    }
+    encode gzip zstd
+    request_body {
+        max_size 100MB
+    }
+    reverse_proxy documentserver:80 {
+        flush_interval -1
+        transport http {
+            keepalive 30s
+        }
+    }
+
+    header {
+        Permissions-Policy "unload=*"
+    }
+}
+

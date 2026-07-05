@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily check for Euro-Office / ONLYOFFICE-connector upstream updates
+Documentation=https://github.com/freddominugez/vulcan-office-stack
+
+[Timer]
+OnCalendar=*-*-* 06:17:00
+RandomizedDelaySec=15m
+Persistent=true
+Unit=vulcan-eurooffice-check.service
+
+[Install]
+WantedBy=timers.target

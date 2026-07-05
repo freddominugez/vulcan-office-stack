@@ -1,0 +1,22 @@
+vulcan-office-stack
+Copyright (c) 2026 Vulcan / Carlos Dominguez
+
+This product includes and depends on the following upstream projects, all
+licensed under GNU AGPL-3.0:
+
+- ONLYOFFICE Document Server
+  Copyright (c) Ascensio System SIA
+  https://github.com/ONLYOFFICE/DocumentServer
+
+- Euro-Office DocumentServer (fork of ONLYOFFICE Document Server)
+  https://github.com/Euro-Office/DocumentServer
+
+- ONLYOFFICE app for Nextcloud (basis for the `vulcanoffice` connector fork)
+  Copyright (c) Ascensio System SIA
+  https://github.com/ONLYOFFICE/onlyoffice-nextcloud
+
+- Nextcloud Server
+  Copyright (c) Nextcloud GmbH and contributors
+  https://github.com/nextcloud/server
+
+Trademarks are the property of their respective owners.

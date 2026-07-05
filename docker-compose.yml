@@ -1,0 +1,154 @@
+services:
+  caddy:
+    image: caddy-cf:2
+    container_name: vo-caddy
+    pull_policy: never
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      CF_API_TOKEN: "${CF_API_TOKEN}"
+    networks: [frontnet]
+    mem_limit: 256m
+
+  db:
+    image: mariadb:11
+    container_name: vo-db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PWD}"
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: "${DB_PWD}"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks: [backnet]
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: vo-redis
+    restart: unless-stopped
+    command: redis-server --requirepass "${REDIS_PWD}" --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks: [backnet]
+    mem_limit: 300m
+
+  nextcloud:
+    image: nextcloud:30-apache
+    container_name: vo-nextcloud
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      MYSQL_HOST: db
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: "${DB_PWD}"
+      REDIS_HOST: redis
+      REDIS_HOST_PASSWORD: "${REDIS_PWD}"
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: "${NC_ADMIN_PWD}"
+      NEXTCLOUD_TRUSTED_DOMAINS: "drive.vulcanoffice.com vulcanoffice.com www.vulcanoffice.com"
+      OBJECTSTORE_S3_BUCKET: vulcan-office-nextcloud
+      OBJECTSTORE_S3_HOST: grsqvmp3unjy.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
+      OBJECTSTORE_S3_KEY: "${OCI_S3_KEY}"
+      OBJECTSTORE_S3_SECRET: "${OCI_S3_SECRET}"
+      OBJECTSTORE_S3_REGION: sa-saopaulo-1
+      OBJECTSTORE_S3_PORT: 443
+      OBJECTSTORE_S3_SSL: "true"
+      OBJECTSTORE_S3_USEPATH_STYLE: "true"
+      OVERWRITEPROTOCOL: https
+      OVERWRITEHOST: drive.vulcanoffice.com
+      OVERWRITECLIURL: https://drive.vulcanoffice.com
+      PHP_MEMORY_LIMIT: 512M
+      PHP_UPLOAD_LIMIT: 10G
+    volumes:
+      - nextcloud_html:/var/www/html
+    networks: [frontnet, backnet]
+    mem_limit: 2g
+
+  documentserver:
+    image: ghcr.io/euro-office/documentserver@sha256:bb7ba0a9609f395c7848f48f86c3219f187d804a28239ec949bc5e97e1e778a5
+    container_name: vo-eo
+    restart: unless-stopped
+    stop_grace_period: 60s
+    environment:
+      JWT_ENABLED: "true"
+      JWT_SECRET: "${EO_JWT_SECRET}"
+      JWT_HEADER: Authorization
+      JWT_IN_BODY: "true"
+      USE_UNAUTHORIZED_STORAGE: "false"
+    volumes:
+      - eo_data:/var/www/onlyoffice/Data
+      - eo_log:/var/log/onlyoffice
+      - eo_lib:/var/lib/onlyoffice
+      - eo_db:/var/lib/postgresql
+      # Brand override: logos (svg + gz pair for each of the 5 slots)
+      - ./branding/header-logo_s.svg:/var/www/euro-office/documentserver/web-apps/apps/common/main/resources/img/header/header-logo_s.svg:ro
+      - ./branding/header-logo_s.svg.gz:/var/www/euro-office/documentserver/web-apps/apps/common/main/resources/img/header/header-logo_s.svg.gz:ro
+      - ./branding/dark-logo_s.svg:/var/www/euro-office/documentserver/web-apps/apps/common/main/resources/img/header/dark-logo_s.svg:ro
+      - ./branding/dark-logo_s.svg.gz:/var/www/euro-office/documentserver/web-apps/apps/common/main/resources/img/header/dark-logo_s.svg.gz:ro
+      - ./branding/about-logo_s.svg:/var/www/euro-office/documentserver/web-apps/apps/common/main/resources/img/about/logo_s.svg:ro
+      - ./branding/about-logo_s.svg.gz:/var/www/euro-office/documentserver/web-apps/apps/common/main/resources/img/about/logo_s.svg.gz:ro
+      - ./branding/about-logo-white_s.svg:/var/www/euro-office/documentserver/web-apps/apps/common/main/resources/img/about/logo-white_s.svg:ro
+      - ./branding/about-logo-white_s.svg.gz:/var/www/euro-office/documentserver/web-apps/apps/common/main/resources/img/about/logo-white_s.svg.gz:ro
+      - ./branding/embed-logo.svg:/var/www/euro-office/documentserver/web-apps/apps/common/embed/resources/img/logo.svg:ro
+      - ./branding/embed-logo.svg.gz:/var/www/euro-office/documentserver/web-apps/apps/common/embed/resources/img/logo.svg.gz:ro
+      # Brand override: favicons for the 5 editors
+      - ./branding/favicon.ico:/var/www/euro-office/documentserver/web-apps/apps/documenteditor/main/resources/img/favicon.ico:ro
+      - ./branding/favicon.ico:/var/www/euro-office/documentserver/web-apps/apps/spreadsheeteditor/main/resources/img/favicon.ico:ro
+      - ./branding/favicon.ico:/var/www/euro-office/documentserver/web-apps/apps/presentationeditor/main/resources/img/favicon.ico:ro
+      - ./branding/favicon.ico:/var/www/euro-office/documentserver/web-apps/apps/visioeditor/main/resources/img/favicon.ico:ro
+      - ./branding/favicon.ico:/var/www/euro-office/documentserver/web-apps/apps/pdfeditor/main/resources/img/favicon.ico:ro
+      # Brand override: welcome page (logo + favicon)
+      - ./branding/welcome-logo.svg:/var/www/euro-office/documentserver-example/welcome/css/logo.svg:ro
+      - ./branding/favicon.ico:/var/www/euro-office/documentserver-example/welcome/css/favicon.ico:ro
+      # Brand override: accent color #2f74f0 (app.css of the 5 editors)
+      - ./branding/css/documenteditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/documenteditor/main/resources/css/app.css:ro
+      - ./branding/css/spreadsheeteditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/spreadsheeteditor/main/resources/css/app.css:ro
+      - ./branding/css/presentationeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/presentationeditor/main/resources/css/app.css:ro
+      - ./branding/css/pdfeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/pdfeditor/main/resources/css/app.css:ro
+      - ./branding/css/visioeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/visioeditor/main/resources/css/app.css:ro
+    networks: [frontnet]
+    mem_limit: 8g
+    memswap_limit: 8g
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:80/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+      start_period: 180s
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}
+  mariadb_data: {}
+  nextcloud_html: {}
+  eo_data: {}
+  eo_log: {}
+  eo_lib: {}
+  eo_db: {}
+
+networks:
+  frontnet:
+    driver: bridge
+    name: vo-frontnet
+  backnet:
+    driver: bridge
+    name: vo-backnet
+    internal: true

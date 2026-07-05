@@ -1,0 +1,24 @@
+[Unit]
+Description=Check for Euro-Office and ONLYOFFICE-connector upstream updates
+Documentation=https://github.com/freddominugez/vulcan-office-stack
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/check-eurooffice-updates.sh
+Nice=10
+IOSchedulingClass=idle
+ProtectSystem=strict
+ReadWritePaths=/var/lib/vulcan /var/log/vulcan
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+NoNewPrivileges=yes
