@@ -1,0 +1,81 @@
+VULCAN OFFICE
+=============
+
+Vulcan Office is a modification of Euro-Office Desktop Editors, which is
+itself derived from ONLYOFFICE Desktop Editors. It is distributed under the
+GNU Affero General Public License version 3.0 (see AGPL-3.0.txt).
+
+This program comes with ABSOLUTELY NO WARRANTY. This is free software, and
+you are welcome to redistribute it under the conditions of the AGPL-3.0.
+
+--------------------------------------------------------------------------
+Copyright notices (preserved and required by AGPL-3.0 sec. 5(a))
+--------------------------------------------------------------------------
+
+Modifications:
+  Copyright (c) 2026 Carlos Frederico Dominguez / Vulcan
+
+Upstream (Euro-Office Desktop Editors):
+  Copyright (c) Euro-Office contributors
+  Source: https://github.com/Euro-Office/desktop-apps
+
+Original upstream (ONLYOFFICE Desktop Editors):
+  Copyright (c) Ascensio System SIA 2010-2025
+  https://www.onlyoffice.com/
+
+--------------------------------------------------------------------------
+Endorsement disclaimer (AGPL-3.0 sec. 7(a))
+--------------------------------------------------------------------------
+
+Vulcan Office is NOT provided, endorsed, or supported by:
+  - Ascensio System SIA
+  - the ONLYOFFICE project or its trademark holders
+  - the Euro-Office organization
+
+Any support requests concerning this Vulcan-branded binary must be directed
+to Vulcan (https://vulcanoffice.com/support), not to the upstream projects.
+
+--------------------------------------------------------------------------
+Corresponding source (AGPL-3.0 sec. 6(d))
+--------------------------------------------------------------------------
+
+The complete corresponding source used to produce this binary is publicly
+available at:
+
+  https://github.com/freddominugez/vulcan-office-stack
+
+Every release tag (e.g. v9.3.1-vulcan.1) in that repository pins:
+  1. The upstream Euro-Office/desktop-apps commit used as the shell source.
+  2. The upstream Euro-Office/DesktopEditors tag used as the engine.
+  3. The exact branding overlay applied (under desktop/branding/).
+  4. The build script that produces this installer (desktop/build/).
+
+To obtain the source used for a specific version:
+
+  git clone --branch <tag> https://github.com/freddominugez/vulcan-office-stack
+
+--------------------------------------------------------------------------
+Binary distribution
+--------------------------------------------------------------------------
+
+The Windows installer for Vulcan Office is unsigned. Windows SmartScreen
+displays "Windows protected your PC" on first execution. To proceed:
+
+  1. Click "More info"
+  2. Click "Run anyway"
+
+This behavior stops after the binary earns reputation, or immediately when
+a code-signing certificate is added in a future release.
+
+Cryptographic integrity of the download is provided via a detached OpenPGP
+signature over sha256sums.txt. The public key for "Vulcan Office Releases
+<releases@vulcanoffice.com>" is published inside the installer under
+desktop\keys\releases-pubkey.asc and mirrored at
+https://vulcanoffice.com/downloads/keys/releases-pubkey.asc
+
+--------------------------------------------------------------------------
+Third-party components
+--------------------------------------------------------------------------
+
+See THIRD-PARTY.md for attribution and licenses of libraries and assets
+shipped inside the Vulcan Office binary.

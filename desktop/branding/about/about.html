@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sobre o Vulcan Office</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --muted: #666680;
+    --accent: #00c2ff;
+    --link: #7a1fbf;
+    --card: #f4f5fb;
+    --border: #e5e6ee;
+  }
+  body {
+    margin: 0;
+    padding: 24px 32px;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  header img { width: 96px; height: auto; }
+  h1 { margin: 0 0 4px 0; font-size: 22px; }
+  .subtitle { color: var(--muted); font-size: 13px; }
+  h2 { font-size: 15px; margin: 20px 0 8px 0; color: var(--link); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .warning {
+    background: #fff8e1;
+    border-color: #ffd54f;
+  }
+  code {
+    background: #eef0f8;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul { margin: 6px 0; padding-left: 22px; }
+  footer {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+  }
+  button {
+    background: var(--link);
+    color: white;
+    border: 0;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-right: 8px;
+  }
+  button.secondary { background: transparent; color: var(--link); border: 1px solid var(--link); }
+  .actions { margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<!-- Block 1: header -->
+<header>
+  <img src="qrc:/vulcanoffice/logos/about-logo.svg" alt="Vulcan Office">
+  <div>
+    <h1>Vulcan Office</h1>
+    <div class="subtitle">
+      Versao <span id="version">9.3.1-vulcan.1</span> &middot;
+      Build <span id="build-sha">__BUILD_SHA__</span> &middot;
+      <span id="build-date">__BUILD_DATE__</span>
+    </div>
+  </div>
+</header>
+
+<!-- Block 2: derivation notice (AGPL 5(a) + 5(c) + 7(a)) -->
+<div class="card">
+  Vulcan Office e uma modificacao de
+  <a href="https://github.com/Euro-Office/desktop-apps">Euro-Office Desktop Editors</a>
+  (commit <code>e5f89e272861</code>), por sua vez derivado de ONLYOFFICE
+  Desktop Editors. Modificado por Carlos Frederico Dominguez em 2026.
+  Este programa NAO e fornecido, endossado ou suportado por Ascensio System
+  SIA ou pela organizacao Euro-Office. Solicitacoes de suporte para este
+  binario Vulcan devem ir para
+  <a href="https://vulcanoffice.com/support">vulcanoffice.com/support</a>.
+</div>
+
+<!-- Block 3: AGPL 14 verbatim notice -->
+<h2>Licenca</h2>
+<div class="card">
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or (at your
+  option) any later version.<br><br>
+  This program is distributed in the hope that it will be useful, but
+  <strong>WITHOUT ANY WARRANTY</strong>; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero
+  General Public License for more details.
+  <div class="actions">
+    <button onclick="openLocalFile('AGPL-3.0.txt')">Ver licenca completa</button>
+    <button class="secondary" onclick="openLocalFile('NOTICE.txt')">NOTICE.txt</button>
+  </div>
+</div>
+
+<!-- Block 4: preserved copyrights -->
+<h2>Direitos autorais</h2>
+<div class="card">
+  <ul>
+    <li>Modificacoes &copy; 2026 Carlos Frederico Dominguez / Vulcan</li>
+    <li>Portions &copy; Euro-Office contributors (upstream shell)</li>
+    <li>Portions &copy; 2010 to 2025 Ascensio System SIA (ONLYOFFICE code base)</li>
+  </ul>
+</div>
+
+<!-- Block 5: source disclosure (AGPL 6(d)) -->
+<h2>Codigo fonte correspondente</h2>
+<div class="card">
+  O codigo fonte completo usado para produzir esta versao esta em:<br>
+  <a href="https://github.com/freddominugez/vulcan-office-stack">
+    github.com/freddominugez/vulcan-office-stack
+  </a> (tag <code>v9.3.1-vulcan.1</code>)
+  <div class="actions">
+    <button onclick="openUrl('https://github.com/freddominugez/vulcan-office-stack/releases/tag/v9.3.1-vulcan.1')">
+      Abrir pagina do release
+    </button>
+    <button class="secondary" onclick="openLocalFile('source-offer/HOW-TO-GET-SOURCE.md')">
+      Como obter fonte
+    </button>
+  </div>
+</div>
+
+<!-- Block 6: third-party -->
+<h2>Componentes de terceiros</h2>
+<div class="card">
+  Este binario embute Qt (LGPL-3.0), Chromium Embedded Framework (BSD-3),
+  OpenSSL, libcurl, ICU, HarfBuzz, FreeType e fontes livres. Lista completa
+  com atribuicoes em <code>THIRD-PARTY.md</code>.
+  <div class="actions">
+    <button class="secondary" onclick="openLocalFile('THIRD-PARTY.md')">Ver third-party</button>
+  </div>
+</div>
+
+<!-- Block 7: unsigned binary warning -->
+<div class="card warning">
+  <strong>Instalador nao assinado (v1).</strong> Este binario nao carrega
+  certificado Authenticode. O Windows SmartScreen exibe
+  "O Windows protegeu o seu PC" no primeiro launch; clique em "Mais informacoes"
+  seguido de "Executar assim mesmo" para prosseguir. A integridade do
+  download pode ser verificada com a chave OpenPGP publicada em
+  <a href="https://vulcanoffice.com/downloads/keys/releases-pubkey.asc">
+    vulcanoffice.com/downloads/keys/releases-pubkey.asc
+  </a>.
+</div>
+
+<!-- Block 8: Vulcan identity + build hash -->
+<footer>
+  <span>
+    <a href="https://vulcanoffice.com">vulcanoffice.com</a> &middot;
+    <a href="https://drive.vulcanoffice.com">drive</a> &middot;
+    <a href="https://office.vulcanoffice.com">office (web)</a>
+  </span>
+  <span>SHA-256 build: <code id="binary-sha">__BINARY_SHA__</code></span>
+</footer>
+
+<script>
+  // Placeholders __BUILD_SHA__, __BUILD_DATE__, __BINARY_SHA__ are replaced
+  // by desktop/build/apply-branding.sh at build time. The functions below
+  // are stubs that the C++ shell wires up to real handlers.
+  function openLocalFile(path) {
+    if (window.vulcan && window.vulcan.openLocalFile) {
+      window.vulcan.openLocalFile(path);
+    } else {
+      window.open(path, '_blank');
+    }
+  }
+  function openUrl(url) {
+    if (window.vulcan && window.vulcan.openUrl) {
+      window.vulcan.openUrl(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+</script>
+
+</body>
+</html>
