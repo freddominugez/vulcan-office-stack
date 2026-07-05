@@ -62,6 +62,23 @@ installed_connector_version() {
         2>/dev/null || echo "unknown"
 }
 
+installed_nextcloud_version() {
+    docker exec -u www-data vo-nextcloud php /var/www/html/occ status 2>/dev/null \
+        | awk '/versionstring:/ {print $3; exit}' \
+        | cut -d. -f1 \
+        || echo "unknown"
+}
+
+# For an ONLYOFFICE-connector tag, fetch appinfo/info.xml and read min/max Nextcloud
+# major-version range so the alert email can flag incompatible upgrades.
+connector_nc_range() {
+    local tag="$1"
+    curl --fail --silent --max-time 10 \
+        "https://raw.githubusercontent.com/ONLYOFFICE/onlyoffice-nextcloud/${tag}/appinfo/info.xml" \
+        | grep -oE 'min-version="[0-9]+" max-version="[0-9]+"' | head -1 \
+        || echo ""
+}
+
 notify() {
     local subject="$1" body="$2"
     log "NOTIFY: ${subject}"
@@ -111,11 +128,19 @@ check_repo() {
     fi
 
     # New tag observed. Compare with installed and notify.
-    local body
-    body=$(printf 'Upstream %s released %s\nInstalled here: %s\nRepo: https://github.com/%s\n\nThis is an alert only; no automatic update was performed.\n' \
-        "${name}" "${latest}" "${installed}" "${repo}")
+    local body compat=""
+    if [[ "${repo}" == "ONLYOFFICE/onlyoffice-nextcloud" ]]; then
+        local range nc
+        range=$(connector_nc_range "${latest}")
+        nc=$(installed_nextcloud_version)
+        if [[ -n "${range}" ]]; then
+            compat=$(printf '\nCompatibility: %s. Installed Nextcloud major: %s.\n' "${range}" "${nc}")
+        fi
+    fi
+    body=$(printf 'Upstream %s released %s\nInstalled here: %s\nRepo: https://github.com/%s%s\nThis is an alert only; no automatic update was performed.\n' \
+        "${name}" "${latest}" "${installed}" "${repo}" "${compat}")
     notify "[vulcan-office] ${name} ${latest} available (installed ${installed})" "${body}"
-    printf '%s' "${latest}" >"${state}.tmp" && mv "${state}.tmp" "${state}"
+    printf '%s\n' "${latest}" >"${state}.tmp" && mv "${state}.tmp" "${state}"
 }
 
 log "=== check start ==="

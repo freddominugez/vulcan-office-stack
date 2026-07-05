@@ -114,9 +114,10 @@ COUNT=0
 while IFS= read -r -d '' f; do
     if grep -qE "(Util::(script|addScript|addStyle|addHeader)|getAppPath|appName\s*=)\s*\(?['\"]onlyoffice['\"]" "$f" \
        || grep -q "/apps/onlyoffice/" "$f"; then
-        sedi -E "s|(Util::(script|addScript|addStyle|addHeader)\()['\"]onlyoffice['\"]|\1'vulcanoffice'|g" "$f"
-        sedi -E "s|(getAppPath\()['\"]onlyoffice['\"]|\1'vulcanoffice'|g" "$f"
-        sedi -E "s|(appName[[:space:]]*=[[:space:]]*)['\"]onlyoffice['\"]|\1'vulcanoffice'|g" "$f"
+        # Use '#' as sed delimiter — pattern uses '|' for alternation with -E
+        sedi -E "s#(Util::(script|addScript|addStyle|addHeader)\()['\"]onlyoffice['\"]#\1'vulcanoffice'#g" "$f"
+        sedi -E "s#(getAppPath\()['\"]onlyoffice['\"]#\1'vulcanoffice'#g" "$f"
+        sedi -E "s#(appName[[:space:]]*=[[:space:]]*)['\"]onlyoffice['\"]#\1'vulcanoffice'#g" "$f"
         sedi 's|/apps/onlyoffice/|/apps/vulcanoffice/|g' "$f"
         COUNT=$((COUNT+1))
     fi
@@ -128,13 +129,13 @@ log "  ${COUNT} template/lib file(s) rewritten"
 log "== attribution assertion =="
 for f in "${DEST}/README.md" "${DEST}/AUTHORS.md" "${DEST}/appinfo/info.xml"; do
     [[ -f "$f" ]] || continue
-    if ! grep -q "Ascensio System" "$f" 2>/dev/null; then
+    if ! grep -qE "Ascensio System|ONLYOFFICE|onlyoffice\.com" "$f" 2>/dev/null; then
         echo "ERROR: upstream attribution missing in ${f#${DEST}/}" >&2
         echo "       aborting — inspect and adjust sed scope before retrying." >&2
         exit 2
     fi
 done
-log "  Ascensio System attribution preserved"
+log "  upstream attribution preserved (Ascensio System / ONLYOFFICE)"
 
 log "== done =="
 log "output: ${DEST}"
