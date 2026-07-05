@@ -118,12 +118,17 @@ services:
       # Brand override: welcome page (logo + favicon)
       - ./branding/welcome-logo.svg:/var/www/euro-office/documentserver-example/welcome/css/logo.svg:ro
       - ./branding/favicon.ico:/var/www/euro-office/documentserver-example/welcome/css/favicon.ico:ro
-      # Brand override: accent color #2f74f0 (app.css of the 5 editors)
-      - ./branding/css/documenteditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/documenteditor/main/resources/css/app.css:ro
-      - ./branding/css/spreadsheeteditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/spreadsheeteditor/main/resources/css/app.css:ro
-      - ./branding/css/presentationeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/presentationeditor/main/resources/css/app.css:ro
-      - ./branding/css/pdfeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/pdfeditor/main/resources/css/app.css:ro
-      - ./branding/css/visioeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/visioeditor/main/resources/css/app.css:ro
+      # DISABLED 2026-07-05: the accent-color overrides in branding/css/ were
+      # generated against an older editor build (2026-06-16) and go out of sync
+      # every time the upstream image bumps, silently breaking the responsive
+      # toolbar layout. Kept in the repo for future regeneration against the
+      # current build; re-enable only after re-diffing against the container
+      # /var/www/euro-office/documentserver/web-apps/apps/<editor>/main/resources/css/app.css.
+      #- ./branding/css/documenteditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/documenteditor/main/resources/css/app.css:ro
+      #- ./branding/css/spreadsheeteditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/spreadsheeteditor/main/resources/css/app.css:ro
+      #- ./branding/css/presentationeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/presentationeditor/main/resources/css/app.css:ro
+      #- ./branding/css/pdfeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/pdfeditor/main/resources/css/app.css:ro
+      #- ./branding/css/visioeditor.app.css:/var/www/euro-office/documentserver/web-apps/apps/visioeditor/main/resources/css/app.css:ro
     networks: [frontnet]
     mem_limit: 8g
     memswap_limit: 8g
