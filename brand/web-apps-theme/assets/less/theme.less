@@ -1,0 +1,33 @@
+// Vulcan Office Theme
+// Loaded AFTER the main LESS files, so it can override any variable.
+// Override using variables where possible; put rules that need real CSS in overrides.less.
+//
+// Build with: THEME=vulcan-office
+
+// ==========================================================================
+// Theme Variables
+// ==========================================================================
+
+// Vulcan brand colours. Same values as branding/themes.json so the editor chrome
+// and the custom "theme-vulcan-light" UI theme stay in step.
+@vulcan-primary: #2f74f0;
+@vulcan-primary-dark: #2361d0;
+@vulcan-primary-darker: #1a4fb2;
+
+// Logo paths (used by overrides.less). "light"/"dark" name the LOGO's colour:
+// the light logo is white (#fff) and sits on a dark header; the dark logo is #222.
+@theme-logo-light-url: '@{common-image-const-path}/header/vulcan_logo_light.svg';
+@theme-logo-dark-url: '@{common-image-const-path}/header/vulcan_logo_dark.svg';
+
+// About dialog logos
+@theme-about-logo-url: '@{common-image-const-path}/about/logo.svg';
+@theme-about-logo-dark-url: '@{common-image-const-path}/about/logo.svg';
+
+// Override brand colors
+@brand-primary: @vulcan-primary;
+
+// ==========================================================================
+// Load CSS Overrides
+// ==========================================================================
+
+@import "overrides.less";
