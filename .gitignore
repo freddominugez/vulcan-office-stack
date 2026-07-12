@@ -5,3 +5,7 @@
 .DS_Store
 /tmp/
 node_modules/
+
+# Clones read-only dos upstreams Euro-Office (fonte do fork). Vários GB;
+# nunca versionados aqui — o fork vive nos repos Euro-Office/* forkados.
+/upstream/
