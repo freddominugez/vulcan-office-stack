@@ -164,17 +164,22 @@ if ! grep -q 'ARG THEME' "$WA_DOCKERFILE"; then
     # It is genuinely a regression, not our doing: the 9.3.1 image running in
     # production has a substituted title, and a stock 9.3.2 build does not.
     #
-    # These are exactly the three tokens theme/README.md documents for editor HTML.
+    # Four tokens reach the deployed HTML. theme/README.md documents three of them and
+    # omits {{PUBLISHER_URL}} -- which is the AGPL source link, the one that matters
+    # most. The `! grep` at the end is what caught that omission: it fails the build if
+    # ANY token survives, so a token added upstream can never silently ship raw.
     cat >> "$WA_DOCKERFILE" <<'DOCKERFILE'
 
     # --- Vulcan Office: work around upstream v9.3.2 dropping {{TOKEN}} substitution
     # in the deployed HTML (build/scripts/deploy-html.js only handles @@SRC_ROOT@@).
     ARG APP_TITLE_TEXT=ONLYOFFICE
+    ARG PUBLISHER_URL=https://www.onlyoffice.com
     ARG LOADER_LOGO=dark-logo_s.svg
     ARG LOADER_LOGO_DARK=header-logo_s.svg
 
     RUN find ${BUILD_ROOT} -name '*.html' -exec sed -i \
             -e "s|{{APP_TITLE_TEXT}}|${APP_TITLE_TEXT}|g" \
+            -e "s|{{PUBLISHER_URL}}|${PUBLISHER_URL}|g" \
             -e "s|{{LOADER_LOGO_DARK}}|${LOADER_LOGO_DARK}|g" \
             -e "s|{{LOADER_LOGO}}|${LOADER_LOGO}|g" {} + && \
         ! grep -rq '{{[A-Z_]*}}' ${BUILD_ROOT} --include='*.html'

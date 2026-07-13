@@ -40,6 +40,7 @@ target "web-apps" {
     # background needs the DARK logo, and vice versa. Getting these backwards yields an
     # invisible splash logo -- white on white -- which no test catches.
     APP_TITLE_TEXT   = "Vulcan Office"
+    PUBLISHER_URL    = "https://github.com/freddominugez/vulcan-office-stack"
     LOADER_LOGO      = "dark-logo_s.svg"    # on light background
     LOADER_LOGO_DARK = "header-logo_s.svg"  # white logo, on dark background
   }
