@@ -3,6 +3,8 @@
     acme_ca https://acme-v02.api.letsencrypt.org/directory
 }
 
+# The DMS. Our own app now -- Nextcloud is gone, and with it the /.well-known
+# carddav/caldav redirects, which only ever existed to satisfy Nextcloud clients.
 drive.vulcanoffice.com {
     tls {
         dns cloudflare {env.CF_API_TOKEN}
@@ -12,15 +14,12 @@ drive.vulcanoffice.com {
     request_body {
         max_size 50GB
     }
-    
-    redir /.well-known/carddav /remote.php/dav/ 301
-    redir /.well-known/caldav /remote.php/dav/ 301
-    
-    reverse_proxy nextcloud:80 {
+
+    reverse_proxy app:3000 {
         header_up X-Forwarded-Proto https
         header_up X-Forwarded-Host {host}
     }
-    
+
     header {
         ?Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         ?Referrer-Policy "strict-origin-when-cross-origin"
@@ -31,6 +30,11 @@ drive.vulcanoffice.com {
     }
 }
 
+# The editor. This is the ONLY route from the internet to the Document Server: it
+# publishes no host port and sits on the internal `frontnet`. Everything the browser
+# needs arrives through here -- api.js (the DocsAPI entrypoint the app <script>-loads),
+# the editor assets, and the collaborative-editing WebSocket, which reverse_proxy
+# upgrades automatically.
 office.vulcanoffice.com {
     tls {
         dns cloudflare {env.CF_API_TOKEN}
@@ -38,9 +42,13 @@ office.vulcanoffice.com {
     }
     encode gzip zstd
     request_body {
+        # Uploads reach the editor as document downloads/saves, not as request bodies,
+        # but conversion callbacks can be chunky. 100MB is the upstream default.
         max_size 100MB
     }
     reverse_proxy documentserver:80 {
+        # -1 disables response buffering. The Document Server long-polls and streams;
+        # buffering here desyncs co-editing sessions.
         flush_interval -1
         transport http {
             keepalive 30s
@@ -51,4 +59,3 @@ office.vulcanoffice.com {
         Permissions-Policy "unload=*"
     }
 }
-

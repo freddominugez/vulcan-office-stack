@@ -1,0 +1,110 @@
+# Build the Vulcan Office Document Server (AGPL) for amd64 and arm64.
+#
+# Mirrors the upstream Euro-Office pipeline: one bake per arch, arm64 on a NATIVE
+# ARM runner (never QEMU -- emulating a C++ build of this size is not viable).
+#
+# The rebrand is applied by scripts/rebrand.sh, which only ADDS files. Nothing in
+# core/sdkjs/web-apps/server is patched, so this stays mergeable with upstream.
+
+name: build-documentserver
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: 'Euro-Office/DocumentServer tag or branch to build'
+        required: true
+        default: 'v9.3.2'
+      push_image:
+        description: 'Push to GHCR'
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'v*-vulcan.*'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+
+    steps:
+      - name: Checkout vulcan-office-stack (brand + rebrand script)
+        uses: actions/checkout@v4
+        with:
+          path: stack
+
+      # The upstream tree is NOT vendored here. We check it out fresh and rebrand it,
+      # which keeps this repo small and makes the provenance of every upstream byte
+      # auditable: it is whatever Euro-Office published at ${upstream_ref}.
+      - name: Checkout Euro-Office/DocumentServer
+        uses: actions/checkout@v4
+        with:
+          repository: Euro-Office/DocumentServer
+          ref: ${{ github.event.inputs.upstream_ref || 'v9.3.2' }}
+          submodules: recursive
+          path: upstream
+
+      - name: Free up disk (the DS build needs far more than the runner ships with)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h /
+
+      - name: Apply the Vulcan rebrand
+        run: ./stack/scripts/rebrand.sh ./upstream
+
+      # A rebrand that edits upstream files would conflict on every merge. Fail loudly
+      # if that ever starts happening, rather than discovering it during a sync.
+      - name: Assert the rebrand is purely additive
+        working-directory: upstream
+        run: |
+          if git status --porcelain | grep -vE '^\?\?'; then
+            echo "::error::rebrand modified tracked upstream files; it must only ADD files"
+            exit 1
+          fi
+          echo "OK: rebrand only added files"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: inputs.push_image || startsWith(github.ref, 'refs/tags/')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        working-directory: upstream/build
+        env:
+          BUILDX_BAKE_ENTITLEMENTS_FS: '0'
+        run: |
+          set -a; . "$GITHUB_WORKSPACE/stack/brand/brand.env"; set +a
+          docker buildx bake \
+            -f ./docker-bake.hcl \
+            -f ./brands/vulcan-office-brand/brand-server.hcl \
+            --set "*.platform=linux/${{ matrix.arch }}" \
+            --set "standalone.tags=ghcr.io/${{ github.repository_owner }}/vulcan-office-documentserver:${{ github.ref_name }}-${{ matrix.arch }}" \
+            brand-icons standalone
+
+      - name: Push
+        if: inputs.push_image || startsWith(github.ref, 'refs/tags/')
+        working-directory: upstream/build
+        env:
+          BUILDX_BAKE_ENTITLEMENTS_FS: '0'
+        run: |
+          set -a; . "$GITHUB_WORKSPACE/stack/brand/brand.env"; set +a
+          docker buildx bake \
+            -f ./docker-bake.hcl \
+            -f ./brands/vulcan-office-brand/brand-server.hcl \
+            --set "*.platform=linux/${{ matrix.arch }}" \
+            --set "standalone.tags=ghcr.io/${{ github.repository_owner }}/vulcan-office-documentserver:${{ github.ref_name }}-${{ matrix.arch }}" \
+            --push brand-icons standalone
