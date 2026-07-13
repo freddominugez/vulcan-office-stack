@@ -55,6 +55,18 @@ services:
       JWT_HEADER: Authorization
       JWT_IN_BODY: "true"
       USE_UNAUTHORIZED_STORAGE: "false"
+
+      # REQUIRED, and not optional in the way it looks. The Document Server blocks
+      # downloads from private IPs by default (SSRF protection) and answers `error: -4`.
+      # `app` is a container on this private network, so with the stock default the
+      # editor can NEVER fetch a document from us -- the integration is dead on arrival,
+      # and it fails at document-open time, long after the healthcheck has gone green.
+      #
+      # What actually keeps this safe is JWT_ENABLED above, NOT this flag: the URL the
+      # editor fetches arrives inside a config signed with VO_JWT_SECRET, so nobody
+      # without that secret can point the Document Server at an arbitrary internal
+      # address. Turn JWT off and this does become a real SSRF into the internal network.
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
     volumes:
       # The brand is compiled INTO this image, so unlike the old deployment there are
       # no logo bind-mounts here. That is the whole point of building from source:

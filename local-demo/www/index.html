@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Vulcan Office — demo local</title>
+<style>html,body{margin:0;height:100%}#ed{position:absolute;inset:0}</style>
+<div id="ed"></div>
+<!-- The only contact with the editor: load api.js and call the DocsAPI global.
+     No sdkjs/web-apps/core code is imported here. -->
+<script src="http://localhost:8099/web-apps/apps/api/documents/api.js"></script>
+<script>
+  new DocsAPI.DocEditor("ed", {
+    document: {
+      fileType: "docx",
+      key: "demo-" + Date.now(),          // new key each load: never serve a cached doc
+      title: "Documento Vulcan.docx",
+      url: "http://web/sample.docx"        // fetched by the editor, container-to-container
+    },
+    documentType: "word",
+    editorConfig: { lang: "pt-BR", mode: "edit", user: { id: "1", name: "Vulcan" } }
+  });
+</script>

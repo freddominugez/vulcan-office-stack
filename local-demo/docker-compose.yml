@@ -1,0 +1,52 @@
+# Run Vulcan Office locally, from the image built out of our own source.
+#
+#   cd local-demo && docker compose up -d
+#   open http://localhost:8099/    (the demo page mounts the editor on a .docx)
+#
+# This is a DEMO, not the production stack (that one is ../docker-compose.yml). JWT is
+# off and there is no auth, so it is bound to localhost only. Do not expose it.
+#
+# Why a hand-rolled demo page instead of the upstream `example` app: the example ships
+# broken in v9.3.2 -- its pkg bundle throws MODULE_NOT_FOUND in helpers/fileUtility.js
+# before it can serve a request. That is upstream's bug, not the rebrand's (our brand
+# overlay only replaces images under public/images/). The page in www/ exercises the
+# same integration surface the real app uses: load api.js, call DocsAPI.DocEditor.
+
+services:
+  documentserver:
+    image: ghcr.io/freddominugez/vulcan-office-documentserver:local
+    container_name: vo-local-ds
+    environment:
+      JWT_ENABLED: "false"        # demo only; production signs both directions
+      # Without this the editor cannot fetch the document AT ALL: the Document Server
+      # blocks downloads from private IPs (SSRF protection) and answers `error: -4`.
+      # `web` is a container on a private network, so the stock default makes the whole
+      # integration dead on arrival. With JWT off this really is an open SSRF -- which
+      # is exactly why this demo binds to 127.0.0.1 only and must not be exposed.
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
+    ports:
+      - "127.0.0.1:8099:80"
+    networks: [demo]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:80/healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+  web:
+    # Serves the demo page to the browser (on :8100), and sample.docx to the EDITOR.
+    # The editor fetches the document as http://web/sample.docx -- container-to-container
+    # on this network, which is why that URL says `web` and not localhost: `localhost`
+    # inside the documentserver container is the documentserver itself.
+    image: nginx:alpine
+    container_name: vo-local-web
+    volumes:
+      - ./www:/usr/share/nginx/html:ro
+    ports:
+      - "127.0.0.1:8100:80"
+    networks: [demo]
+
+networks:
+  demo:
+    driver: bridge
