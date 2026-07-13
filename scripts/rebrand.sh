@@ -7,17 +7,25 @@
 # Reruns produce byte-identical results on the target tree. Every file touched is
 # printed with a "brand:" prefix so CI logs make the diff auditable.
 #
-# WHAT THIS DOES NOT DO
-#   No source file of core/sdkjs/sdkjs-forms/core-fonts/document-formats is touched.
-#   No existing upstream file is edited in place anywhere. The rebrand is additive:
-#   it creates two directories and one file, all of which this script owns.
+# WHAT THIS DOES
+#   Almost everything is additive -- it creates two directories and one file, all of
+#   which this script owns and regenerates from scratch on every run:
 #
 #     web-apps/theme/vulcan-office/          (web-apps ships a first-class theme system)
 #     build/brands/vulcan-office-brand/      (the bake "brand-icons" overlay context)
 #     NOTICE.md                              (AGPL attribution + list of modifications)
 #
-#   Those two directories are regenerated from scratch on every run -- that is what
-#   makes the script idempotent. Nothing outside them is removed.
+#   Plus EXACTLY ONE edit to an upstream file, and it is unavoidable:
+#
+#     web-apps/.docker/web-apps.bake.Dockerfile
+#       Upstream HARDCODES `THEME=euro-office` on the build-pipeline line. The theme
+#       system is otherwise fully wired -- so without this patch our theme directory is
+#       built and then ignored, and the image comes out looking like Euro-Office while
+#       every other check (healthcheck, image size, install paths) passes. That failure
+#       is silent, which is why it is worth one line of patch. We turn the hardcoded
+#       value into an ARG so the brand can select it.
+#
+#   Nothing in core/sdkjs/sdkjs-forms/core-fonts/document-formats is touched at all.
 #
 # WHY IT LOOKS LIKE THIS
 #   Upstream supports downstream brands natively, so no mass sed is needed:
@@ -126,6 +134,55 @@ cat > "$THEME_DST/meta/config.json" <<JSON
 JSON
 touch -t 202601010000.00 -- "$THEME_DST/meta/config.json"
 log "wrote web-apps/theme/$THEME/meta/config.json"
+
+# ---------------------------------------------------------------------------
+# 1b. Make the web-apps theme selectable.
+#
+# The one upstream file we edit. Upstream hardcodes `THEME=euro-office` in the build
+# step, so the theme directory written above would be built and then never selected.
+# Idempotent: the sed only matches the unpatched form, and rerunning is a no-op.
+# ---------------------------------------------------------------------------
+WA_DOCKERFILE="$UPSTREAM/web-apps/.docker/web-apps.bake.Dockerfile"
+# Guard on `ARG THEME`, NOT on `THEME=euro-office`: the line we insert is
+# `ARG THEME=euro-office` (that is its default), so guarding on the literal
+# `THEME=euro-office` matches our own patch and re-applies it on every run --
+# stacking a fresh ARG line each time. Caught by the run-it-twice test.
+if ! grep -q 'ARG THEME' "$WA_DOCKERFILE"; then
+    sed -i \
+        -e 's|^\( *\)ARG BUILD_ROOT=/package|\1ARG BUILD_ROOT=/package\n\1ARG THEME=euro-office|' \
+        -e 's|THEME=euro-office \\|THEME=${THEME} \\|' \
+        "$WA_DOCKERFILE"
+
+    # Second half of the same patch: substitute the brand tokens in the deployed HTML.
+    #
+    # This works around an UPSTREAM REGRESSION in v9.3.2. build/scripts/deploy-html.js
+    # -- which its own comment describes as replacing "grunt's copy:indexhtml +
+    # replace:indexhtml steps" -- only ever substitutes @@SRC_ROOT@@. It dropped the
+    # {{TOKEN}} replacement that `replace:indexhtml` used to do, so every editor ships
+    # with a literal `{{APP_TITLE_TEXT}}` in its <title> and a broken splash logo.
+    #
+    # It is genuinely a regression, not our doing: the 9.3.1 image running in
+    # production has a substituted title, and a stock 9.3.2 build does not.
+    #
+    # These are exactly the three tokens theme/README.md documents for editor HTML.
+    cat >> "$WA_DOCKERFILE" <<'DOCKERFILE'
+
+    # --- Vulcan Office: work around upstream v9.3.2 dropping {{TOKEN}} substitution
+    # in the deployed HTML (build/scripts/deploy-html.js only handles @@SRC_ROOT@@).
+    ARG APP_TITLE_TEXT=ONLYOFFICE
+    ARG LOADER_LOGO=dark-logo_s.svg
+    ARG LOADER_LOGO_DARK=header-logo_s.svg
+
+    RUN find ${BUILD_ROOT} -name '*.html' -exec sed -i \
+            -e "s|{{APP_TITLE_TEXT}}|${APP_TITLE_TEXT}|g" \
+            -e "s|{{LOADER_LOGO_DARK}}|${LOADER_LOGO_DARK}|g" \
+            -e "s|{{LOADER_LOGO}}|${LOADER_LOGO}|g" {} + && \
+        ! grep -rq '{{[A-Z_]*}}' ${BUILD_ROOT} --include='*.html'
+DOCKERFILE
+    log "patched web-apps/.docker/web-apps.bake.Dockerfile (THEME arg + HTML token fix)"
+else
+    log "web-apps.bake.Dockerfile already patched"
+fi
 
 # ---------------------------------------------------------------------------
 # 2. brand-icons overlay (server + example + package)

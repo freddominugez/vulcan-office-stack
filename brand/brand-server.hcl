@@ -18,6 +18,33 @@
 # dockerfile-inline wins over dockerfile the overlay would be silently dropped and the
 # build would come out unbranded. So we override dockerfile-inline itself.
 
+# Select our theme for the web-apps build.
+#
+# Upstream hardcodes `THEME=euro-office` in web-apps/.docker/web-apps.bake.Dockerfile;
+# scripts/rebrand.sh turns it into an ARG so this can override it. Without BOTH halves
+# the editor builds green and unbranded -- the theme directory is present, and simply
+# never selected.
+#
+# Only THEME is needed: web-apps/build/theme.config.mjs resolves each brand token as
+# `env var > theme/<THEME>/meta/config.json > ONLYOFFICE default`, and our config.json
+# already carries company_name, publisher_url, attribution and the logo names.
+target "web-apps" {
+  args = {
+    THEME = "vulcan-office"
+
+    # The deployed HTML carries three brand tokens that upstream v9.3.2 stopped
+    # substituting (see the deploy-html.js note in scripts/rebrand.sh). We substitute
+    # them ourselves, so they have to be passed in.
+    #
+    # The names describe the LOGO's colour, not the theme's: the loader on a light
+    # background needs the DARK logo, and vice versa. Getting these backwards yields an
+    # invisible splash logo -- white on white -- which no test catches.
+    APP_TITLE_TEXT   = "Vulcan Office"
+    LOADER_LOGO      = "dark-logo_s.svg"    # on light background
+    LOADER_LOGO_DARK = "header-logo_s.svg"  # white logo, on dark background
+  }
+}
+
 target "brand-icons" {
   context = "./brands/vulcan-office-brand"
 
