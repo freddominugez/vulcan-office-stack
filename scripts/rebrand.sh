@@ -148,10 +148,26 @@ WA_DOCKERFILE="$UPSTREAM/web-apps/.docker/web-apps.bake.Dockerfile"
 # `THEME=euro-office` matches our own patch and re-applies it on every run --
 # stacking a fresh ARG line each time. Caught by the run-it-twice test.
 if ! grep -q 'ARG THEME' "$WA_DOCKERFILE"; then
+    # Two shapes of this Dockerfile exist in the wild and they differ on the line that
+    # matters. At tag v9.3.2 the build step is `THEME=euro-office grunt ...`; on the
+    # DocumentServer default branch it is `THEME=euro-office \` continuing into
+    # `node scripts/build-pipeline.js`. Matching only one of them is how the ARM image
+    # came out unbranded while this script cheerfully reported success.
+    #
+    # So: rewrite THEME=euro-office on every line that is NOT an `ARG` declaration
+    # (the ARG line legitimately keeps euro-office as its default), and then ASSERT it.
     sed -i \
         -e 's|^\( *\)ARG BUILD_ROOT=/package|\1ARG BUILD_ROOT=/package\n\1ARG THEME=euro-office|' \
-        -e 's|THEME=euro-office \\|THEME=${THEME} \\|' \
+        -e '/^[[:space:]]*ARG /! s|THEME=euro-office|THEME=${THEME}|g' \
         "$WA_DOCKERFILE"
+
+    # Fail loudly rather than build an unbranded image that passes every other check.
+    if grep -vE '^[[:space:]]*ARG ' "$WA_DOCKERFILE" | grep -q 'THEME=euro-office'; then
+        echo "error: could not parameterise THEME in $WA_DOCKERFILE" >&2
+        echo "hint: upstream changed the build line; the remaining hardcoded THEME is:" >&2
+        grep -nE 'THEME=euro-office' "$WA_DOCKERFILE" | grep -vE '^[0-9]+: *ARG ' >&2
+        exit 1
+    fi
 
     # Second half of the same patch: substitute the brand tokens in the deployed HTML.
     #
